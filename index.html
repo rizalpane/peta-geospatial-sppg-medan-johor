@@ -1,0 +1,1380 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistem Monitoring Dapur MBG - Medan Johor</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f1f5f9;
+      }
+
+      #map {
+        height: 500px;
+        width: 100%;
+        border-radius: 0.5rem;
+        z-index: 1;
+      }
+
+      @media (min-width: 1024px) {
+        #map {
+          height: 750px;
+        }
+      }
+
+      .leaflet-container {
+        font-family: inherit;
+      }
+
+      /* Custom scrollbar for sidebar */
+      .custom-scroll::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scroll::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+      .custom-scroll::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+      }
+    </style>
+  </head>
+  <body class="text-slate-900">
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-[1000]">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16 items-center">
+          <div class="flex items-center gap-3">
+            <div class="bg-blue-600 p-2 rounded shadow-sm">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-6 h-6 text-white"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+            </div>
+            <div>
+              <span
+                class="text-lg font-extrabold text-slate-800 tracking-tight block leading-none"
+                >DAPUR MBG</span
+              >
+              <span
+                class="text-[10px] font-bold text-slate-500 uppercase tracking-widest"
+                >Monitoring Sasaran Medan Johor</span
+              >
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <div
+              class="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-md border border-slate-200"
+            >
+              <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span class="text-xs font-semibold text-slate-600"
+                ><span id="total-dapur">0</span> Unit Dapur</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Map Section -->
+        <div class="lg:col-span-7 order-1">
+          <div
+            class="bg-white p-1 rounded-lg border border-slate-200 shadow-sm overflow-hidden sticky top-20"
+          >
+            <div id="map"></div>
+          </div>
+        </div>
+
+        <!-- Detail Information Sidebar -->
+        <div class="lg:col-span-5 space-y-4 order-2">
+          <div
+            class="bg-white rounded-lg border border-slate-200 shadow-sm flex flex-col min-h-[750px]"
+          >
+            <!-- Sidebar Header -->
+            <div
+              class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50"
+            >
+              <div id="sidebar-title-container">
+                <h2
+                  id="sidebar-title"
+                  class="font-bold text-slate-800 uppercase text-xs tracking-wider"
+                >
+                  Dashboard Unit Dapur
+                </h2>
+              </div>
+              <button
+                id="btn-back"
+                class="hidden text-blue-600 font-bold text-xs flex items-center gap-1 hover:underline"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  />
+                </svg>
+                Kembali
+              </button>
+            </div>
+
+            <!-- Placeholder -->
+            <div
+              id="info-placeholder"
+              class="p-10 text-center flex-1 flex flex-col items-center justify-center"
+            >
+              <div
+                class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-400"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-6 h-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+              </div>
+              <p
+                class="text-sm text-slate-500 font-medium px-4 leading-relaxed"
+              >
+                Pilih unit dapur untuk melihat detail manajemen dan jangkauan
+                sasaran.
+              </p>
+            </div>
+
+            <!-- Main Content Kitchen -->
+            <div
+              id="info-content"
+              class="hidden p-6 space-y-6 overflow-y-auto custom-scroll"
+            >
+              <section>
+                <h3
+                  id="detail-nama"
+                  class="text-2xl font-extrabold text-blue-800 leading-tight"
+                ></h3>
+                <p
+                  class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1"
+                >
+                  Kepala:
+                  <span id="detail-kepala" class="text-slate-700"></span>
+                </p>
+              </section>
+
+              <div class="grid grid-cols-2 gap-3">
+                <a
+                  id="wa-link"
+                  href="#"
+                  target="_blank"
+                  class="flex items-center justify-center gap-2 py-3 bg-[#25D366] hover:bg-[#128C7E] text-white text-[10px] font-bold rounded shadow-sm transition-all uppercase px-2 text-center"
+                >
+                  WhatsApp Kepala
+                </a>
+                <div
+                  class="p-2 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center text-center"
+                >
+                  <span
+                    class="text-[8px] font-bold text-slate-400 uppercase block"
+                    >Koordinat</span
+                  >
+                  <span
+                    id="detail-coords"
+                    class="text-[10px] font-bold text-slate-700 font-mono"
+                  ></span>
+                </div>
+              </div>
+
+              <!-- Penerima Manfaat Section -->
+              <div class="space-y-3">
+                <h4
+                  class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest"
+                >
+                  Sasaran Penerima Manfaat
+                </h4>
+
+                <!-- Anak Sekolah Card -->
+                <div
+                  id="btn-show-schools"
+                  class="cursor-pointer group relative overflow-hidden bg-blue-600 rounded-xl p-5 text-white shadow-lg hover:bg-blue-700 transition-all border border-blue-500"
+                >
+                  <div class="relative z-10 flex justify-between items-center">
+                    <div>
+                      <span
+                        class="text-[10px] font-bold text-blue-200 uppercase block mb-1"
+                        >Anak Sekolah</span
+                      >
+                      <div class="flex items-baseline gap-2">
+                        <span
+                          id="detail-anak"
+                          class="text-4xl font-black tracking-tight"
+                        ></span>
+                        <span
+                          class="text-blue-200 text-xs font-semibold uppercase"
+                          >Jiwa</span
+                        >
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <span
+                        class="text-[8px] bg-white/20 px-2 py-1 rounded-full font-bold uppercase"
+                        >Lihat Sekolah</span
+                      >
+                    </div>
+                  </div>
+                  <div
+                    class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="w-20 h-20"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3z" />
+                    </svg>
+                  </div>
+                </div>
+
+                <!-- 3B Card -->
+                <div
+                  id="btn-show-3b"
+                  class="cursor-pointer group relative overflow-hidden bg-pink-600 rounded-xl p-5 text-white shadow-lg hover:bg-pink-700 transition-all border border-pink-500"
+                >
+                  <div class="relative z-10 flex justify-between items-center">
+                    <div>
+                      <span
+                        class="text-[10px] font-bold text-pink-200 uppercase block mb-1"
+                        >Kelompok 3B</span
+                      >
+                      <div class="flex items-baseline gap-2">
+                        <span
+                          id="detail-3b"
+                          class="text-4xl font-black tracking-tight"
+                        ></span>
+                        <span
+                          class="text-pink-200 text-xs font-semibold uppercase"
+                          >Jiwa</span
+                        >
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <span
+                        class="text-[8px] bg-white/20 px-2 py-1 rounded-full font-bold uppercase tracking-tighter"
+                        >Lihat Detail 3B</span
+                      >
+                    </div>
+                  </div>
+                  <p
+                    class="relative z-10 text-[9px] text-pink-100 font-medium italic mt-1"
+                  >
+                    (Balita, Busui, Bumil)
+                  </p>
+                  <div
+                    class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="w-20 h-20"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onclick="window.print()"
+                class="w-full py-2.5 px-4 bg-slate-50 hover:bg-slate-100 text-slate-500 text-[10px] font-bold rounded transition-colors flex items-center justify-center gap-2 border border-slate-200 uppercase tracking-wider"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                  />
+                </svg>
+                Export Laporan Unit
+              </button>
+            </div>
+
+            <!-- School Table List View -->
+            <div id="school-list-view" class="hidden p-6 space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-slate-800">
+                  Sekolah Penerima MBG
+                </h3>
+              </div>
+              <div class="overflow-x-auto rounded-lg border border-slate-100">
+                <table class="w-full text-left border-collapse">
+                  <thead
+                    class="bg-slate-50 text-[10px] font-bold text-slate-400 uppercase"
+                  >
+                    <tr>
+                      <th class="px-4 py-3">Nama Sekolah</th>
+                      <th class="px-4 py-3 text-right">Siswa</th>
+                      <th class="px-4 py-3 text-center">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    id="school-table-body"
+                    class="text-xs font-medium text-slate-700"
+                  >
+                    <!-- Dynamic Rows -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 3B Table List View -->
+            <div id="threeB-list-view" class="hidden p-6 space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-slate-800">
+                  Distribusi Kelompok 3B
+                </h3>
+              </div>
+              <div
+                class="overflow-x-auto rounded-lg border border-slate-100 shadow-sm"
+              >
+                <table class="w-full text-left border-collapse">
+                  <thead
+                    class="bg-slate-50 text-[9px] font-bold text-slate-400 uppercase"
+                  >
+                    <tr>
+                      <th class="px-3 py-3">Lingkungan / Area</th>
+                      <th class="px-2 py-3 text-center">Bumil</th>
+                      <th class="px-2 py-3 text-center">Balita</th>
+                      <th class="px-2 py-3 text-center">Busui</th>
+                      <th class="px-3 py-3 text-right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    id="threeB-table-body"
+                    class="text-[11px] font-medium text-slate-700"
+                  >
+                    <!-- Dynamic Rows -->
+                  </tbody>
+                </table>
+              </div>
+              <div class="p-3 bg-pink-50 border border-pink-100 rounded-lg">
+                <p
+                  class="text-[10px] text-pink-700 font-semibold leading-relaxed"
+                >
+                  * Data rincian per lingkungan diverifikasi oleh petugas
+                  lapangan SPPG setiap periode mingguan.
+                </p>
+              </div>
+            </div>
+
+            <!-- School Detail View -->
+            <div id="school-detail-view" class="hidden p-6 space-y-6">
+              <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-5">
+                <h3
+                  id="sch-detail-nama"
+                  class="text-xl font-extrabold text-indigo-900 leading-tight"
+                ></h3>
+                <div class="flex gap-2 mt-2">
+                  <span
+                    class="bg-indigo-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
+                    >Penerima MBG</span
+                  >
+                </div>
+              </div>
+
+              <div class="space-y-4">
+                <h4
+                  class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest"
+                >
+                  Rincian Per Jenjang
+                </h4>
+                <div id="jenjang-container" class="space-y-3">
+                  <!-- Dynamic Jenjang Cards -->
+                </div>
+              </div>
+
+              <div
+                class="pt-4 border-t border-slate-100 flex items-center justify-between"
+              >
+                <div class="text-center bg-slate-50 p-3 rounded-lg flex-1 mr-2">
+                  <span
+                    class="text-[9px] text-slate-400 font-bold block uppercase"
+                    >Total Siswa</span
+                  >
+                  <span
+                    id="sch-total-siswa"
+                    class="text-xl font-black text-slate-800"
+                  ></span>
+                </div>
+                <div class="text-center bg-slate-50 p-3 rounded-lg flex-1 ml-2">
+                  <span
+                    class="text-[9px] text-slate-400 font-bold block uppercase"
+                    >Total Guru</span
+                  >
+                  <span
+                    id="sch-total-guru"
+                    class="text-xl font-black text-slate-800"
+                  ></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer
+      class="max-w-7xl mx-auto py-8 px-4 border-t border-slate-200 mt-8 text-center sm:text-left"
+    >
+      <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+        <p class="text-slate-500 text-[11px] font-medium tracking-wide">
+          SISTEM INFORMASI GEOSPASIAL DAPUR MBG &copy; 2024 - KECAMATAN MEDAN
+          JOHOR
+        </p>
+        <div class="flex gap-4">
+          <span class="text-[10px] font-bold text-slate-400 uppercase"
+            >Status: Operasional</span
+          >
+          <span class="text-[10px] font-bold text-slate-400">V.3.1.0</span>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+      const schoolsData = {
+        1: [
+          {
+            id: 101,
+            nama: "ASH-SHOLIHAH",
+            lat: 3.522273497428081,
+            lng: 98.67354707054237,
+            data: [
+              { jenjang: "RA/BA/TA", siswa: 63, guru: 7 },
+              { jenjang: "SDS", siswa: 546, guru: 35 },
+            ],
+          },
+          {
+            id: 102,
+            nama: "AL IHMY",
+            lat: 3.523719711642248,
+            lng: 98.66058272862053,
+            data: [{ jenjang: "KB", siswa: 30, guru: 4 }],
+          },
+          {
+            id: 103,
+            nama: "KARUNIA",
+            lat: 3.5246914248218637,
+            lng: 98.67254520520243,
+            data: [{ jenjang: "TK", siswa: 12, guru: 5 }],
+          },
+          {
+            id: 104,
+            nama: "AR RAHMAH",
+            lat: 3.5251520889122157,
+            lng: 98.6737173192152,
+            data: [{ jenjang: "TK/RA", siswa: 13, guru: 7 }],
+          },
+          {
+            id: 105,
+            nama: "AL-WASHLIYAH ",
+            lat: 3.5161677192473473,
+            lng: 98.6735734839737,
+            data: [
+              { jenjang: "MTSS", siswa: 285, guru: 20 },
+              { jenjang: "MAS", siswa: 223, guru: 25 },
+            ],
+          },
+          {
+            id: 106,
+            nama: "ISLAM AL-FADHLI",
+            lat: 3.522143854775557,
+            lng: 98.67343055726049,
+            data: [{ jenjang: "SMP", siswa: 135, guru: 25 }],
+          },
+          {
+            id: 107,
+            nama: "ASGA MANDIRI",
+            lat: 3.523969918785613,
+            lng: 98.67685596935213,
+            data: [
+              { jenjang: "SMP", siswa: 59, guru: 10 },
+              { jenjang: "SMK", siswa: 68, guru: 12 },
+            ],
+          },
+          {
+            id: 108,
+            nama: "ABATA",
+            lat: 3.5243417731154403,
+            lng: 98.67802612091843,
+            data: [{ jenjang: "TK", siswa: 36, guru: 5 }],
+          },
+          {
+            id: 109,
+            nama: "ULUN-NUHA",
+            lat: 3.5148529491967855,
+            lng: 98.67325938619982,
+            data: [
+              { jenjang: "RA", siswa: 112, guru: 15 },
+              { jenjang: "SD", siswa: 344, guru: 0 },
+            ],
+          },
+          {
+            id: 110,
+            nama: "IKHWAN ULUN-NUHA",
+            lat: 3.514738500447384,
+            lng: 98.67315612115789,
+            data: [
+              { jenjang: "SMP", siswa: 179, guru: 15 },
+              { jenjang: "SMA", siswa: 99, guru: 14 },
+            ],
+          },
+          {
+            id: 111,
+            nama: "ASOKA",
+            lat: 3.522235943925062,
+            lng: 98.67633309199304,
+            data: [{ jenjang: "PAUD", siswa: 22, guru: 3 }],
+          },
+        ],
+        2: [
+          {
+            id: 201,
+            nama: "SD NEGERI 067952",
+            lat: 3.530116723645396,
+            lng: 98.68001794051662,
+            data: [{ jenjang: "SD", siswa: 575, guru: 0 }],
+          },
+          {
+            id: 202,
+            nama: "SD NEGERI 064988",
+            lat: 3.540385063667992,
+            lng: 98.67860476750347,
+            data: [{ jenjang: "SD", siswa: 303, guru: 0 }],
+          },
+          {
+            id: 203,
+            nama: "SD NEGERI 060930",
+            lat: 3.54017233900768,
+            lng: 98.67847093866793,
+            data: [{ jenjang: "SD", siswa: 257, guru: 0 }],
+          },
+          {
+            id: 204,
+            nama: "SD NEGERI 067690",
+            lat: 3.5404563350164557,
+            lng: 98.67900921064594,
+            data: [{ jenjang: "SD", siswa: 406, guru: 0 }],
+          },
+          {
+            id: 205,
+            nama: "SD NEGERI 060929",
+            lat: 3.5398925416080833,
+            lng: 98.67868223962708,
+            data: [{ jenjang: "SD", siswa: 384, guru: 0 }],
+          },
+          {
+            id: 206,
+            nama: "SD SWASTA AL-WASHLIYAH 4",
+            lat: 3.5524054288599642,
+            lng: 98.695641852126,
+            data: [{ jenjang: "SD", siswa: 129, guru: 0 }],
+          },
+          {
+            id: 207,
+            nama: "ULUN NUHA AKHWAT",
+            lat: 3.5281063315554357,
+            lng: 98.67624869556354,
+            data: [
+              { jenjang: "SMA", siswa: 219, guru: 0 },
+              { jenjang: "SMP", siswa: 213, guru: 0 },
+            ],
+          },
+        ],
+        3: [
+          {
+            id: 301,
+            nama: "RAUDHARUSSHOLIHIN",
+            lat: 3.537223090402733,
+            lng: 98.67043315031269,
+            data: [
+              { jenjang: "RA", siswa: 19, guru: 4 },
+              { jenjang: "MI", siswa: 115, guru: 14 },
+            ],
+          },
+          {
+            id: 302,
+            nama: "SEMANGAT BANGSA",
+            lat: 3.536633908724703,
+            lng: 98.67826363376722,
+            data: [
+              { jenjang: "PAUD", siswa: 8, guru: 0 },
+              { jenjang: "SD", siswa: 102, guru: 13 },
+            ],
+          },
+          {
+            id: 303,
+            nama: "ALWASLIYAH 5",
+            lat: 3.5340236929357953,
+            lng: 98.6839749571848,
+            data: [{ jenjang: "SD", siswa: 81, guru: 8 }],
+          },
+          {
+            id: 304,
+            nama: "UPT SDN 060928",
+            lat: 3.521023859566832,
+            lng: 98.68172550983229,
+            data: [{ jenjang: "SD", siswa: 348, guru: 20 }],
+          },
+          {
+            id: 305,
+            nama: "UPT SDN 066668",
+            lat: 3.516161717427003,
+            lng: 98.6651707116811,
+            data: [{ jenjang: "SD", siswa: 504, guru: 30 }],
+          },
+          {
+            id: 306,
+            nama: "BINA BERSAUDARA",
+            lat: 3.5379911586413644,
+            lng: 98.68603952243434,
+            data: [
+              { jenjang: "SMP", siswa: 206, guru: 18 },
+              { jenjang: "SMA", siswa: 250, guru: 20 },
+              { jenjang: "SMK", siswa: 105, guru: 15 },
+              { jenjang: "SMK", siswa: 58, guru: 17 },
+            ],
+          },
+        ],
+        4: [
+          {
+            id: 401,
+            nama: "Al-Manar",
+            lat: 3.5354271497472367,
+            lng: 98.68574088582845,
+            data: [{ jenjang: "Lainnya", siswa: 0, guru: 0 }],
+          },
+          {
+            id: 402,
+            nama: "Al-Amin",
+            lat: 3.534006920339205,
+            lng: 98.67736858778878,
+            data: [{ jenjang: "Lainnya", siswa: 0, guru: 0 }],
+          },
+          {
+            id: 403,
+            nama: "RA-Aisyah Az-Zahra",
+            lat: 3.5338537894170337,
+            lng: 98.67243389549903,
+            data: [{ jenjang: "RA", siswa: 0, guru: 0 }],
+          },
+          {
+            id: 404,
+            nama: "Pesantren Modern Al-Mualimin Al-Islami",
+            lat: 3.533,
+            lng: 98.6765,
+            data: [{ jenjang: "Lainnya", siswa: 0, guru: 0 }],
+          },
+          {
+            id: 405,
+            nama: "Pesantren Modern MTS TA,DIB",
+            lat: 3.5261917187442267,
+            lng: 98.68241177737491,
+            data: [{ jenjang: "MTS", siswa: 0, guru: 0 }],
+          },
+        ],
+        5: [
+          {
+            id: 501,
+            nama: "ST. IGNATIUS",
+            lat: 3.5281443478811823,
+            lng: 98.66281427501838,
+            data: [{ jenjang: "TK", siswa: 135, guru: 0 }],
+          },
+          {
+            id: 502,
+            nama: "AL-KAUTSAR",
+            lat: 3.533879354391923,
+            lng: 98.67920123426832,
+            data: [
+              { jenjang: "MI", siswa: 22, guru: 0 },
+              { jenjang: "SD", siswa: 318, guru: 0 },
+            ],
+          },
+          {
+            id: 503,
+            nama: "YAPSI",
+            lat: 3.5261341731815357,
+            lng: 98.67719573681926,
+            data: [{ jenjang: "SD", siswa: 241, guru: 0 }],
+          },
+          {
+            id: 504,
+            nama: "SDN 067259",
+            lat: 3.540426246934488,
+            lng: 98.66421952332593,
+            data: [{ jenjang: "SD", siswa: 324, guru: 0 }],
+          },
+          {
+            id: 505,
+            nama: "PRIMBANA",
+            lat: 3.5411853852161874,
+            lng: 98.66451321753829,
+            data: [
+              { jenjang: "SD", siswa: 131, guru: 0 },
+              { jenjang: "SMP", siswa: 157, guru: 0 },
+              { jenjang: "SMA", siswa: 271, guru: 0 },
+            ],
+          },
+          {
+            id: 506,
+            nama: "SMPN 28",
+            lat: 3.5301187711401436,
+            lng: 98.6806667491396,
+            data: [{ jenjang: "SMP", siswa: 800, guru: 0 }],
+          },
+        ],
+        6: [
+          {
+            id: 601,
+            nama: "NUR ILMAN",
+            lat: 3.525515673044209,
+            lng: 98.6566890307962,
+            data: [
+              { jenjang: "MI", siswa: 70, guru: 0 },
+              { jenjang: "RA", siswa: 30, guru: 0 },
+            ],
+          },
+          {
+            id: 602,
+            nama: "USWATUN HASANAH",
+            lat: 3.5357011563385314,
+            lng: 98.67206318284558,
+            data: [{ jenjang: "RA", siswa: 69, guru: 0 }],
+          },
+        ],
+        7: [
+          {
+            id: 701,
+            nama: "SD Negeri 060933",
+            lat: 3.538971350055104,
+            lng: 98.65471493143397,
+            data: [{ jenjang: "SD", siswa: 585, guru: 0 }],
+          },
+          {
+            id: 702,
+            nama: "SD Negeri 060934",
+            lat: 3.5366365366725376,
+            lng: 98.65431895139864,
+            data: [{ jenjang: "SD", siswa: 203, guru: 0 }],
+          },
+          {
+            id: 703,
+            nama: "SD Negeri 060938",
+            lat: 3.536832408336697,
+            lng: 98.65404461435706,
+            data: [{ jenjang: "SD", siswa: 206, guru: 0 }],
+          },
+          {
+            id: 704,
+            nama: "SD Negeri 064033",
+            lat: 3.537245675458907,
+            lng: 98.64894734337996,
+            data: [{ jenjang: "SD", siswa: 127, guru: 0 }],
+          },
+          {
+            id: 705,
+            nama: "ST. PETRUS MEDAN",
+            lat: 3.5415735650626825,
+            lng: 98.65867395583062,
+            data: [
+              { jenjang: "SD", siswa: 605, guru: 0 },
+              { jenjang: "SMP", siswa: 370, guru: 0 },
+              { jenjang: "SMA", siswa: 297, guru: 0 },
+            ],
+          },
+        ],
+        8: [
+          {
+            id: 801,
+            nama: "HARAPAN BARU",
+            lat: 3.5104460876379893,
+            lng: 98.65299362759367,
+            data: [
+              { jenjang: "TK", siswa: 43, guru: 0 },
+              { jenjang: "SD", siswa: 291, guru: 0 },
+              { jenjang: "SMP", siswa: 90, guru: 0 },
+              { jenjang: "SMA", siswa: 90, guru: 0 },
+              { jenjang: "SMK", siswa: 80, guru: 0 },
+            ],
+          },
+          {
+            id: 802,
+            nama: "SDN 064990",
+            lat: 3.514667821574834,
+            lng: 98.64922796750345,
+            data: [{ jenjang: "SD", siswa: 475, guru: 0 }],
+          },
+          {
+            id: 803,
+            nama: "YAYASAN PUTRI INDAH",
+            lat: 3.5336494915719117,
+            lng: 98.65304143294381,
+            data: [{ jenjang: "Lainnya", siswa: 87, guru: 0 }],
+          },
+          {
+            id: 804,
+            nama: "DARMA MEDAN",
+            lat: 3.5319633254013643,
+            lng: 98.67133503508538,
+            data: [
+              { jenjang: "SMP", siswa: 149, guru: 0 },
+              { jenjang: "SD", siswa: 345, guru: 0 },
+            ],
+          },
+        ],
+        9: [
+          {
+            id: 901,
+            nama: "FEBBY ADELIA",
+            lat: 3.525696941476845,
+            lng: 98.6511241675035,
+            data: [{ jenjang: "TK", siswa: 55, guru: 6 }],
+          },
+          {
+            id: 902,
+            nama: "LENTERA MANDIRI",
+            lat: 3.5218813336516663,
+            lng: 98.65705587859554,
+            data: [{ jenjang: "PAUD", siswa: 15, guru: 2 }],
+          },
+          {
+            id: 903,
+            nama: "SADA ARIH",
+            lat: 3.514481917698705,
+            lng: 98.65366338654293,
+            data: [{ jenjang: "PAUD", siswa: 10, guru: 1 }],
+          },
+          {
+            id: 904,
+            nama: "IVANA SCHOOL",
+            lat: 3.5201266933812887,
+            lng: 98.6520237330844,
+            data: [{ jenjang: "TK", siswa: 11, guru: 2 }],
+          },
+          {
+            id: 905,
+            nama: "GRACIA",
+            lat: 3.525411367138469,
+            lng: 98.65302588044423,
+            data: [{ jenjang: "TK", siswa: 112, guru: 11 }],
+          },
+          {
+            id: 906,
+            nama: "AS-SHAFIYAH",
+            lat: 3.538428224300809,
+            lng: 98.66469466223825,
+            data: [
+              { jenjang: "TK", siswa: 34, guru: 6 },
+              { jenjang: "SMP", siswa: 59, guru: 17 },
+              { jenjang: "SD", siswa: 68, guru: 17 },
+            ],
+          },
+          {
+            id: 907,
+            nama: "SELPI GALERY",
+            lat: 3.5298051780404176,
+            lng: 98.65461796673453,
+            data: [{ jenjang: "TK", siswa: 50, guru: 6 }],
+          },
+          {
+            id: 908,
+            nama: "AN-NUR",
+            lat: 3.5332919492485235,
+            lng: 98.6808006098223,
+            data: [
+              { jenjang: "TK", siswa: 62, guru: 4 },
+              { jenjang: "SD", siswa: 77, guru: 10 },
+            ],
+          },
+          {
+            id: 909,
+            nama: "SDN 067776",
+            lat: 3.5251574586590197,
+            lng: 98.65505759208891,
+            data: [{ jenjang: "SD", siswa: 213, guru: 21 }],
+          },
+          {
+            id: 910,
+            nama: "YAPERI",
+            lat: 3.515056982992092,
+            lng: 98.65322641722715,
+            data: [
+              { jenjang: "SD", siswa: 92, guru: 12 },
+              { jenjang: "SMP", siswa: 71, guru: 11 },
+            ],
+          },
+          {
+            id: 911,
+            nama: "AL RAZI SINAR HARAPAN",
+            lat: 3.526696941280042,
+            lng: 98.66341803866796,
+            data: [
+              { jenjang: "SMP", siswa: 430, guru: 20 },
+              { jenjang: "SMK", siswa: 113, guru: 26 },
+            ],
+          },
+          {
+            id: 912,
+            nama: "AKTERLIS",
+            lat: 3.538640622160922,
+            lng: 98.66531807064814,
+            data: [{ jenjang: "SMA", siswa: 349, guru: 47 }],
+          },
+          {
+            id: 913,
+            nama: "KARYA MURNI",
+            lat: 3.5283736122674125,
+            lng: 98.66262161169328,
+            data: [{ jenjang: "SLB", siswa: 27, guru: 16 }],
+          },
+        ],
+      };
+
+      // Database Distribusi 3B per Lingkungan (Mock Data)
+      const threeBData = {
+        1: [
+          {
+            area: "Lingkungan I (Karya Wisata)",
+            bumil: 12,
+            balita: 85,
+            busui: 53,
+          },
+          {
+            area: "Lingkungan II (Pangkalan Mansyur)",
+            bumil: 8,
+            balita: 42,
+            busui: 30,
+          },
+          { area: "Komplek J-City", bumil: 5, balita: 25, busui: 10 },
+        ],
+        2: [
+          {
+            area: "Lingkungan III (Eka Warni)",
+            bumil: 15,
+            balita: 70,
+            busui: 40,
+          },
+          {
+            area: "Lingkungan IV (Eka Rasmi)",
+            bumil: 10,
+            balita: 55,
+            busui: 35,
+          },
+        ],
+        3: [
+          {
+            area: "Lingkungan V (Jl. Karya Kasih)",
+            bumil: 20,
+            balita: 90,
+            busui: 50,
+          },
+          { area: "Gg. Madrasah", bumil: 12, balita: 48, busui: 20 },
+        ],
+        4: [
+          {
+            area: "Lingkungan VI (Kwala Bekala)",
+            bumil: 14,
+            balita: 60,
+            busui: 26,
+          },
+        ],
+        5: [
+          {
+            area: "Lingkungan VII (Titi Kuning)",
+            bumil: 18,
+            balita: 82,
+            busui: 40,
+          },
+          { area: "Area Pasar Tikung", bumil: 15, balita: 55, busui: 30 },
+        ],
+      };
+
+      const dataDapur = [
+        {
+          id: 1,
+          nama: "Dapur SPPG Gedung Johor I",
+          lat: 3.5154265160137284,
+          lng: 98.66365107634941,
+          kepalaSPPG: "IKHSAN FAJRI ANDA NASUTION, S.Pd",
+          telp: "6282114149450",
+          penerima: { anak: 2700, tigaB: 150 },
+        },
+        {
+          id: 2,
+          nama: "Dapur SPPG Gedung Johor II",
+          lat: 3.522754200074163,
+          lng: 98.67071295604026,
+          kepalaSPPG: "RIZKY AZHAR NASUTION",
+          telp: "6285959925557",
+          penerima: { anak: 2486, tigaB: 0 },
+        },
+        {
+          id: 3,
+          nama: "Dapur SPPG Gedung Johor III",
+          lat: 3.5227051308922355,
+          lng: 98.66053709941794,
+          kepalaSPPG: "RIZKI IRWANSYAH",
+          telp: "6281269549636",
+          penerima: { anak: 1955, tigaB: 154 },
+        },
+        {
+          id: 4,
+          nama: "Dapur SPPG Gedung Johor IV",
+          lat: 3.526576,
+          lng: 98.665918,
+          kepalaSPPG: "NANDA KESUMA ARINATA",
+          telp: "6282272526177",
+          penerima: { anak: 0, tigaB: 0 },
+        },
+        {
+          id: 5,
+          nama: "Dapur SPPG Pangkalan Mansyur I",
+          lat: 3.5406259995986806,
+          lng: 98.66323065701316,
+          kepalaSPPG: "HAFIZ NASUTION",
+          telp: "6281376446061",
+          penerima: { anak: 2399, tigaB: 110 },
+        },
+        {
+          id: 6,
+          nama: "Dapur SPPG Pangkalan Mansyur II",
+          lat: 3.532173,
+          lng: 98.671143,
+          kepalaSPPG: "MUHAMMAD ABDUL RASYID",
+          telp: "6281234567894",
+          penerima: { anak: 1600, tigaB: 0 },
+        },
+        {
+          id: 7,
+          nama: "Dapur SPPG Kwala Bekala I",
+          lat: 3.5393882342095777,
+          lng: 98.6542820742885,
+          kepalaSPPG: "JOEL KABUL SIBURIAN",
+          telp: "6281371887186",
+          penerima: { anak: 2571, tigaB: 429 },
+        },
+        {
+          id: 8,
+          nama: "Dapur SPPG Kwala Bekala II",
+          lat: 3.5140557937037964,
+          lng: 98.64559433556437,
+          kepalaSPPG: "RINALDI TAMPUBOLON",
+          telp: "6281234567894",
+          penerima: { anak: 1650, tigaB: 0 },
+        },
+        {
+          id: 9,
+          nama: "Dapur SPPG Kwala Bekala III",
+          lat: 3.5071341223857355,
+          lng: 98.65383832840767,
+          kepalaSPPG: "DIOPUTRA PIGANDA SITORUS",
+          telp: "62895622030205",
+          penerima: { anak: 1848 + 235, tigaB: 378 },
+        },
+        {
+          id: 10,
+          nama: "Dapur SPPG Suka Maju I",
+          lat: 3.548836734566544,
+          lng: 98.69192770946968,
+          kepalaSPPG: "SUTAN ALAYUBI",
+          telp: "6285762871474",
+          penerima: { anak: 3277, tigaB: 416 },
+        },
+        {
+          id: 11,
+          nama: "Dapur SPPG Suka Maju II",
+          lat: 3.5418248338413845,
+          lng: 98.68946977277922,
+          kepalaSPPG: "EKA ULY YOHANNES P.D BUTAR - BUTAR",
+          telp: "6285278112041",
+          penerima: { anak: 2630, tigaB: 151 },
+        },
+        {
+          id: 12,
+          nama: "Dapur SPPG Suka Maju III",
+          lat: 3.547657,
+          lng: 98.690254,
+          kepalaSPPG: "NAMA KEPALA SPPG",
+          telp: "6281234567894",
+          penerima: { anak: 0, tigaB: 0 },
+        },
+        {
+          id: 13,
+          nama: "Dapur SPPG Titi Kuning I",
+          lat: 3.5381213965674316,
+          lng: 98.68416994945487,
+          kepalaSPPG: "ELSONRI SIHOTANG",
+          telp: "6285359268625",
+          penerima: { anak: 1642 + 230, tigaB: 0 },
+        },
+        {
+          id: 14,
+          nama: "Dapur SPPG Pangkalan Mansyur III",
+          lat: 3.5297749167964323,
+          lng: 98.66781396781056,
+          kepalaSPPG: "ZAHWAN JUHDI",
+          telp: "6281234567894",
+          penerima: { anak: 250, tigaB: 140 },
+        },
+        {
+          id: 15,
+          nama: "Dapur SPPG Kedai Durian I",
+          lat: 3.525034929356492,
+          lng: 98.69112892539444,
+          kepalaSPPG: "MUHAMMAD ZUHDI NASUTION",
+          telp: "6281376777950",
+          penerima: { anak: 2873, tigaB: 125 },
+        },
+      ];
+
+      const kitchenIcon = L.divIcon({
+        className: "custom-icon",
+        html: `<div class="flex items-center justify-center w-10 h-10 bg-blue-600 rounded border-2 border-white shadow-md text-white transition-all hover:bg-blue-700"><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"></path><path d="M3 7v1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1"></path><path d="M19 21V11"></path><path d="M5 21V11"></path><path d="M20 7H4L5 3h14z"></path></svg></div>`,
+        iconSize: [40, 40],
+        iconAnchor: [20, 20],
+        popupAnchor: [0, -20],
+      });
+
+      const schoolIcon = L.divIcon({
+        className: "school-icon",
+        html: `<div class="flex items-center justify-center w-8 h-8 bg-indigo-600 rounded-full border-2 border-white shadow-md text-white"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+      });
+
+      // Init Map
+      const map = L.map("map", { zoomControl: false }).setView(
+        [3.533, 98.678],
+        14,
+      );
+      L.control.zoom({ position: "bottomright" }).addTo(map);
+      L.tileLayer(
+        "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png",
+      ).addTo(map);
+
+      const schoolMarkers = L.layerGroup().addTo(map);
+      let selectedKitchenId = null;
+
+      // UI Helpers
+      const hideAllViews = () => {
+        document.getElementById("info-placeholder").classList.add("hidden");
+        document.getElementById("info-content").classList.add("hidden");
+        document.getElementById("school-list-view").classList.add("hidden");
+        document.getElementById("threeB-list-view").classList.add("hidden");
+        document.getElementById("school-detail-view").classList.add("hidden");
+        document.getElementById("btn-back").classList.add("hidden");
+      };
+
+      const showKitchenView = (id) => {
+        hideAllViews();
+        const data = dataDapur.find((d) => d.id === id);
+        selectedKitchenId = id;
+
+        document.getElementById("info-content").classList.remove("hidden");
+        document.getElementById("detail-nama").innerText = data.nama;
+        document.getElementById("detail-kepala").innerText = data.kepalaSPPG;
+        document.getElementById("detail-coords").innerText =
+          `${data.lat.toFixed(4)}, ${data.lng.toFixed(4)}`;
+        document.getElementById("detail-anak").innerText =
+          data.penerima.anak.toLocaleString("id-ID");
+        document.getElementById("detail-3b").innerText =
+          data.penerima.tigaB.toLocaleString("id-ID");
+        document.getElementById("wa-link").href = `https://wa.me/${data.telp}`;
+
+        document.getElementById("sidebar-title").innerText =
+          "Dashboard Unit Dapur";
+        schoolMarkers.clearLayers();
+      };
+
+      const showSchoolListView = () => {
+        hideAllViews();
+        document.getElementById("school-list-view").classList.remove("hidden");
+        document.getElementById("btn-back").classList.remove("hidden");
+        document.getElementById("sidebar-title").innerText =
+          "Daftar Sekolah Penerima";
+
+        const schools = schoolsData[selectedKitchenId] || [];
+        const tbody = document.getElementById("school-table-body");
+        tbody.innerHTML = "";
+
+        schoolMarkers.clearLayers();
+        schools.forEach((sch) => {
+          const totalSiswa = sch.data.reduce(
+            (acc, curr) => acc + curr.siswa,
+            0,
+          );
+          const sm = L.marker([sch.lat, sch.lng], { icon: schoolIcon }).addTo(
+            schoolMarkers,
+          );
+          sm.bindTooltip(sch.nama);
+          sm.on("click", () => showSchoolDetail(sch.id));
+
+          const row = document.createElement("tr");
+          row.className =
+            "border-b border-slate-50 hover:bg-slate-50 cursor-pointer";
+          row.onclick = () => showSchoolDetail(sch.id);
+          row.innerHTML = `<td class="px-4 py-3 font-bold text-indigo-700">${sch.nama}</td><td class="px-4 py-3 text-right font-bold">${totalSiswa}</td><td class="px-4 py-3 text-center"><span class="text-[9px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded font-bold">INFO</span></td>`;
+          tbody.appendChild(row);
+        });
+
+        if (schools.length > 0) {
+          const group = new L.featureGroup([...schoolMarkers.getLayers()]);
+          map.fitBounds(group.getBounds().pad(0.2));
+        }
+      };
+
+      const show3BDetailView = () => {
+        hideAllViews();
+        document.getElementById("threeB-list-view").classList.remove("hidden");
+        document.getElementById("btn-back").classList.remove("hidden");
+        document.getElementById("sidebar-title").innerText =
+          "Detail Kelompok 3B";
+
+        const data3B = threeBData[selectedKitchenId] || [];
+        const tbody = document.getElementById("threeB-table-body");
+        tbody.innerHTML = "";
+
+        data3B.forEach((item) => {
+          const total = item.bumil + item.balita + item.busui;
+          const row = document.createElement("tr");
+          row.className = "border-b border-slate-50";
+          row.innerHTML = `
+                                    <td class="px-3 py-3 font-semibold text-slate-800">${item.area}</td>
+                                    <td class="px-2 py-3 text-center font-bold text-pink-600">${item.bumil}</td>
+                                    <td class="px-2 py-3 text-center font-bold text-blue-600">${item.balita}</td>
+                                    <td class="px-2 py-3 text-center font-bold text-green-600">${item.busui}</td>
+                                    <td class="px-3 py-3 text-right font-black text-slate-900">${total}</td>
+                                `;
+          tbody.appendChild(row);
+        });
+
+        // Pan ke lokasi dapur saat melihat tabel 3B
+        const kitchen = dataDapur.find((d) => d.id === selectedKitchenId);
+        map.setView([kitchen.lat, kitchen.lng], 15);
+      };
+
+      const showSchoolDetail = (schId) => {
+        hideAllViews();
+        document
+          .getElementById("school-detail-view")
+          .classList.remove("hidden");
+        document.getElementById("btn-back").classList.remove("hidden");
+        document.getElementById("sidebar-title").innerText = "Rincian Sekolah";
+
+        const schools = schoolsData[selectedKitchenId] || [];
+        const sch = schools.find((s) => s.id === schId);
+        if (!sch) return;
+
+        document.getElementById("sch-detail-nama").innerText = sch.nama;
+        const container = document.getElementById("jenjang-container");
+        container.innerHTML = "";
+
+        let totalS = 0,
+          totalG = 0;
+        sch.data.forEach((item) => {
+          totalS += item.siswa;
+          totalG += item.guru;
+          const card = document.createElement("div");
+          card.className =
+            "p-3 bg-white border border-slate-200 rounded-lg flex justify-between items-center shadow-sm";
+          card.innerHTML = `<div><span class="text-[9px] font-bold text-slate-400 uppercase">Jenjang</span><p class="text-sm font-black text-indigo-700">${item.jenjang}</p></div><div class="flex gap-4"><div class="text-center"><span class="text-[8px] text-slate-400 font-bold block uppercase">Siswa</span><span class="text-xs font-bold text-slate-800">${item.siswa}</span></div><div class="text-center"><span class="text-[8px] text-slate-400 font-bold block uppercase">Guru</span><span class="text-xs font-bold text-slate-800">${item.guru}</span></div></div>`;
+          container.appendChild(card);
+        });
+
+        document.getElementById("sch-total-siswa").innerText = totalS;
+        document.getElementById("sch-total-guru").innerText = totalG;
+        map.setView([sch.lat, sch.lng], 16);
+      };
+
+      // Event Listeners
+      document.getElementById("btn-show-schools").onclick = showSchoolListView;
+      document.getElementById("btn-show-3b").onclick = show3BDetailView;
+      document.getElementById("btn-back").onclick = () => {
+        const currentTitle = document.getElementById("sidebar-title").innerText;
+        if (currentTitle === "Rincian Sekolah") {
+          showSchoolListView();
+        } else {
+          showKitchenView(selectedKitchenId);
+        }
+      };
+
+      // Render Kitchen Markers
+      dataDapur.forEach((item) => {
+        const marker = L.marker([item.lat, item.lng], {
+          icon: kitchenIcon,
+          dataDapur: item,
+        }).addTo(map);
+        marker.on("click", (e) =>
+          showKitchenView(e.target.options.dataDapur.id),
+        );
+        marker.bindTooltip(item.nama, {
+          className: "font-bold text-[10px] uppercase shadow-md",
+          direction: "top",
+          offset: [0, -20],
+        });
+      });
+
+      document.getElementById("total-dapur").innerText = dataDapur.length;
+    </script>
+  </body>
+</html>
